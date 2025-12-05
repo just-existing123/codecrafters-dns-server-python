@@ -1,5 +1,5 @@
 import socket
-
+import struct
 
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -12,11 +12,63 @@ def main():
     
     while True:
         try:
-            buf, source = udp_socket.recvfrom(512)
+            data, address = udp_socket.recvfrom(512)
+
+            print(f"dbg : data : {data}")
+
+        #    DNS HEADER FORMAT (12 bytes total) (1 byte = 8 bits)
+
+        # +---------------------+---------------------+
+        # |            ID (16)                        |    --> Packet_ID
+        # +---------------------+---------------------+
+        # | QR (1) | Opcode (4) | AA (1) | TC (1) | RD (1)| RA (1) | Z (3) | RCODE (4)|   --> FLAGS
+        # +---------------------+---------------------+
+        # |            QDCOUNT (16)                 |
+        # +---------------------+---------------------+
+        # |            ANCOUNT (16)                 |
+        # +---------------------+---------------------+
+        # |            NSCOUNT (16)                 |
+        # +---------------------+---------------------+
+        # |            ARCOUNT (16)                 |
+        # +---------------------+---------------------+
+
+        # FIELD EXPLANATION:
+
+        # ID        : 16-bit identifier set by client (used to match replies)
+        # QR        : Query(0) or Response(1)
+        # Opcode    : Type of query (0 = standard)
+        # AA        : Authoritative Answer (set in responses)
+        # TC        : Truncated message
+        # RD        : Recursion Desired
+        # RA        : Recursion Available
+        # Z         : Reserved (must be 0)
+        # RCODE     : Response code (0 = No error)
+
+        # QDCOUNT   : Number of questions
+        # ANCOUNT   : Number of answer RRs
+        # NSCOUNT   : Number of authority RRs
+        # ARCOUNT   : Number of additional RRs
     
             response = b""
-    
-            udp_socket.sendto(response, source)
+
+            packet_id = data[0:2]
+
+            QR1flag = (1<<15)
+
+            QDCount =0
+            ANCount =0
+            NSCount =0
+            ARCount =0
+
+            header = struct.pack("!HHHHH",QR1flag,QDCount,ANCount,NSCount,ARCount)
+            #struct.pack() converts integers to bytes
+            # !HHHHH is the big-endian format
+
+            response = packet_id+header
+
+            udp_socket.sendto(response, address)
+
+
         except Exception as e:
             print(f"Error receiving data: {e}")
             break
