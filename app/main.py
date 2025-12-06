@@ -87,7 +87,7 @@ def main():
             # H -> expect an unsigned short int
 
             # response = packet_id+header
-            response = tester_id+header+question
+            response = packet_id_id+header+(question.encode())
 
             udp_socket.sendto(response, address)
 
