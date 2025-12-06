@@ -34,7 +34,8 @@ def find_opcode(x):
     i=14
     p=0
     while(i>=11):
-        p += (1<<i)
+        if(x&((1<<i))):
+            p+= (1<<i)
         i-=1
     
     return p
