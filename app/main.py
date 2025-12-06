@@ -89,13 +89,6 @@ def main():
             NSCount =0
             ARCount =0
 
-            header = struct.pack("!HHHHH",QR1flag,QDCount,ANCount,NSCount,ARCount)
-            #struct.pack() converts glued integers to bytes (crushes them into specific molded shape and size)
-            # !HHHHH is the big-endian format , each H is for each argument in the function , this string is called the format string
-            #format string tells the function how to crush the data
-            # ! -> big endian indicator (fill the bits in network byte order (do not reverse it))
-            # H -> expect an unsigned short int
-
             #DNS QUESTION
             question = get_question_section(data)
             incoming_qd_count = struct.unpack("!H" , data[4:6])[0]
@@ -112,6 +105,14 @@ def main():
 
             answer_number_parts = struct.pack("!HHIH",answer_type,answer_class,answer_TTL,answer_RDLEN)
             answer = answer_name + answer_number_parts + answer_RDATA
+
+            #UPDATED DNS HEADER ELEMENTS
+            header = struct.pack("!HHHHH",QR1flag,QDCount,ANCount,NSCount,ARCount)
+            #struct.pack() converts glued integers to bytes (crushes them into specific molded shape and size)
+            # !HHHHH is the big-endian format , each H is for each argument in the function , this string is called the format string
+            #format string tells the function how to crush the data
+            # ! -> big endian indicator (fill the bits in network byte order (do not reverse it))
+            # H -> expect an unsigned short int
 
             #DNS RESPONSE
             response = packet_id+header+question+answer
