@@ -30,6 +30,18 @@ def get_question_domain(data):
 
     return data[12:cursor]
 
+def find_opcode(x):
+    i=14
+    p=0
+    while(i>=11):
+        p += (1<<i)
+        i-=1
+    
+    return p
+
+def find_rd(x):
+    return (x&(1<<8))
+
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
@@ -82,7 +94,23 @@ def main():
 
             #DNS HEADER
             packet_id = data[0:2]
-            QR1flag = (1<<15)
+
+            #flags
+            incoming_flag = struct.unpack("!H" , data[2:4])[0]
+
+            QR1_flag = (1<<15)
+            OPcode_flag = find_opcode(incoming_flag)
+            AA_flag = 0
+            TC_flag = 0
+            RD_flag = find_rd(incoming_flag)
+            RA_flag = 0
+            Z_flag =0
+            RCODE_flag=0
+
+            if(OPcode_flag != 0):
+                RCODE_flag=4
+
+            final_flag = QR1_flag + OPcode_flag + AA_flag + TC_flag + RD_flag + RA_flag + Z_flag + RCODE_flag
 
             QDCount =0
             ANCount =0
@@ -107,7 +135,7 @@ def main():
             answer = answer_name + answer_number_parts + answer_RDATA
 
             #UPDATED DNS HEADER ELEMENTS
-            header_number_parts = struct.pack("!HHHHH",QR1flag,QDCount,ANCount,NSCount,ARCount)
+            header_number_parts = struct.pack("!HHHHH",final_flag,QDCount,ANCount,NSCount,ARCount)
             header = packet_id+header_number_parts
             #struct.pack() converts glued integers to bytes (crushes them into specific molded shape and size)
             # !HHHHH is the big-endian format , each H is for each argument in the function , this string is called the format string
