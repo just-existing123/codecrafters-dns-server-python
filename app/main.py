@@ -1,6 +1,21 @@
 import socket
 import struct
 
+def get_question_domain(data):
+    cursor = 12
+    domain_cnt=0
+    while True:
+        label_len = data[cursor]
+        cursor+=1
+
+        if(label_len==0):
+            break
+        else:
+            cursor += label_len
+
+    cursor+=4
+    return data[12:cursor]
+
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
@@ -52,19 +67,27 @@ def main():
             response = b""
 
             packet_id = data[0:2]
+            tester_id = b"1234"
+            question = get_question_domain(data)
+
+            incoming_qd_count = struct.unpack("!H" , data[4:6])[0]
 
             QR1flag = (1<<15)
 
-            QDCount =0
+            QDCount = incoming_qd_count
             ANCount =0
             NSCount =0
             ARCount =0
 
             header = struct.pack("!HHHHH",QR1flag,QDCount,ANCount,NSCount,ARCount)
-            #struct.pack() converts integers to bytes
-            # !HHHHH is the big-endian format
+            #struct.pack() converts glued integers to bytes (crushes them into specific molded shape and size)
+            # !HHHHH is the big-endian format , each H is for each argument in the function , this string is called the format string
+            #format string tells the function how to crush the data
+            # ! -> big endian indicator (fill the bits in network byte order (do not reverse it))
+            # H -> expect an unsigned short int
 
-            response = packet_id+header
+            # response = packet_id+header
+            response = tester_id+header+question
 
             udp_socket.sendto(response, address)
 
