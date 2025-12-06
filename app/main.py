@@ -9,7 +9,8 @@ def get_question_section(data):
         cursor+=1
 
         if(label_len>=192):
-            label_len=1
+            cursor+=2
+            break
 
         if(label_len==0):
             break
@@ -27,7 +28,8 @@ def get_question_domain(data):
         cursor+=1
 
         if(label_len>=192):
-            label_len=1
+            cursor+2
+            break
 
         if(label_len==0):
             break
