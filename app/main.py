@@ -8,6 +8,9 @@ def get_question_section(data):
         label_len = data[cursor]
         cursor+=1
 
+        if(label_len>=192):
+            label_len=1
+
         if(label_len==0):
             break
         else:
@@ -22,6 +25,9 @@ def get_question_domain(data):
     while True:
         label_len = data[cursor]
         cursor+=1
+
+        if(label_len>=192):
+            label_len=1
 
         if(label_len==0):
             break
@@ -130,7 +136,7 @@ def main():
             answer_TTL = 60
             answer_RDLEN = 4
             answer_RDATA = b"\x08\x08\x08\x08"
-            ANCount=1
+            ANCount= QDCount
 
             answer_number_parts = struct.pack("!HHIH",answer_type,answer_class,answer_TTL,answer_RDLEN)
             answer = answer_name + answer_number_parts + answer_RDATA
