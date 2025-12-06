@@ -107,7 +107,8 @@ def main():
             answer = answer_name + answer_number_parts + answer_RDATA
 
             #UPDATED DNS HEADER ELEMENTS
-            header = struct.pack("!HHHHH",QR1flag,QDCount,ANCount,NSCount,ARCount)
+            header_number_parts = struct.pack("!HHHHH",QR1flag,QDCount,ANCount,NSCount,ARCount)
+            header = packet_id+header_number_parts
             #struct.pack() converts glued integers to bytes (crushes them into specific molded shape and size)
             # !HHHHH is the big-endian format , each H is for each argument in the function , this string is called the format string
             #format string tells the function how to crush the data
@@ -115,7 +116,7 @@ def main():
             # H -> expect an unsigned short int
 
             #DNS RESPONSE
-            response = packet_id+header+question+answer
+            response = header+question+answer
 
             udp_socket.sendto(response, address)
 
