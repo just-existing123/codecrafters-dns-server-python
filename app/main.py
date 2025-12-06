@@ -1,7 +1,7 @@
 import socket
 import struct
 
-def get_question_domain(data):
+def get_question_section(data):
     cursor = 12
     domain_cnt=0
     while True:
@@ -14,6 +14,20 @@ def get_question_domain(data):
             cursor += label_len
 
     cursor+=4
+    return data[12:cursor]
+
+def get_question_domain(data):
+    cursor = 12
+    domain_cnt=0
+    while True:
+        label_len = data[cursor]
+        cursor+=1
+
+        if(label_len==0):
+            break
+        else:
+            cursor += label_len
+
     return data[12:cursor]
 
 def main():
@@ -66,15 +80,11 @@ def main():
     
             response = b""
 
+            #DNS HEADER
             packet_id = data[0:2]
-            tester_id = b"1234"
-            question = get_question_domain(data)
-
-            incoming_qd_count = struct.unpack("!H" , data[4:6])[0]
-
             QR1flag = (1<<15)
 
-            QDCount = incoming_qd_count
+            QDCount =0
             ANCount =0
             NSCount =0
             ARCount =0
@@ -86,8 +96,25 @@ def main():
             # ! -> big endian indicator (fill the bits in network byte order (do not reverse it))
             # H -> expect an unsigned short int
 
-            # response = packet_id+header
-            response = packet_id+header+question
+            #DNS QUESTION
+            question = get_question_section(data)
+            incoming_qd_count = struct.unpack("!H" , data[4:6])[0]
+            QDCount=incoming_qd_count
+
+            #DNS ANSWER
+            answer_name = get_question_domain(data) #same as the question domain
+            answer_type = 1
+            answer_class = 1
+            answer_TTL = 60
+            answer_RDLEN = 4
+            answer_RDATA = b"\x08\x08\x08\x08"
+            ANCount=1
+
+            answer_number_parts = struct.pack("!HHIH",answer_type,answer_class,answer_TTL,answer_RDLEN)
+            answer = answer_name + answer_number_parts + answer_RDATA
+
+            #DNS RESPONSE
+            response = packet_id+header+question+answer
 
             udp_socket.sendto(response, address)
 
