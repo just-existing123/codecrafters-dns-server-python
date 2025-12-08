@@ -1,5 +1,6 @@
 import socket
 import struct
+import sys
 
 def get_question_section(data,cursor_start):
     cursor = cursor_start
@@ -57,6 +58,16 @@ def main():
     #
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_socket.bind(("127.0.0.1", 2053))
+
+    resolver_ip = "127.0.0.1"
+    resolver_port = "2053"
+
+    if((len(sys.argv)==3) and sys.argv[1]=="--resolver"):
+        resolver_addr = sys.argv[2]
+        parts = resolver_addr.split(":")
+
+        resolver_ip = parts[0]
+        resolver_port = int(parts[1])
     
     while True:
         try:
@@ -141,6 +152,22 @@ def main():
 
             for _ in range(ANCount):
                 domain_name , curr_cursor = get_question_domain(data,cursor)
+
+                #making the forwarding udp connection
+                forwarding_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+                proxy_flags = struct.pack("!HHHHH",0,1,0,0,0)
+                proxy_header = packet_id + proxy_flags
+                proxy_question , new_cursor = get_question_section(data,cursor)
+
+                proxy_packet = proxy_header + proxy_question
+                forwarding_sock.sendto(proxy_packet,(resolver_ip,resolver_port))
+                resolver_response , known_addr = forwarding_sock.recvfrom(512)
+
+                resolver_question , resolver_answer_start_cursor = get_question_section(resolver_response,12)
+                
+                domain_response = resolver_response[resolver_answer_start_cursor:]
+
                 domain_type = 1
                 domain_class = 1
                 domain_TTL = 60
@@ -151,7 +178,8 @@ def main():
 
                 domain_answer = domain_name + domain_numbers + domain_RDATA
 
-                answers += domain_answer
+                # answers += domain_answer
+                answers += domain_response
                 cursor = curr_cursor
             
 
