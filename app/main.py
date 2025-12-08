@@ -2,6 +2,19 @@ import socket
 import struct
 import sys
 
+def decompressor(data , cursor_start):
+    cursor = cursor_start
+    while True:
+        label_len = data[cursor]
+        cursor+=1
+
+        if(label_len==0):
+            break
+        else:
+            cursor += label_len
+
+    return data[cursor_start:cursor]
+
 def get_question_section(data,cursor_start):
     cursor = cursor_start
     while True:
@@ -9,8 +22,12 @@ def get_question_section(data,cursor_start):
         cursor+=1
 
         if(label_len>=192):
-            cursor+=1
-            break
+            #cursor is at the offset byte right now
+            x=data[cursor]
+            pointed_value = decompressor(data,x)
+            decomp_question_type_and_class = struct.pack("!HH",1,1)
+            decompressed_question = data[cursor_start:cursor-1] + pointed_value + decomp_question_type_and_class
+            return decompressed_question , cursor+5
 
         if(label_len==0):
             break
