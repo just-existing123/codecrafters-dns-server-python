@@ -1,14 +1,14 @@
 import socket
 import struct
 
-def get_question_section(data):
-    cursor = 12
+def get_question_section(data,cursor_start):
+    cursor = cursor_start
     while True:
         label_len = data[cursor]
         cursor+=1
 
         if(label_len>=192):
-            cursor+=2
+            cursor+=1
             break
 
         if(label_len==0):
@@ -17,16 +17,16 @@ def get_question_section(data):
             cursor += label_len
 
     cursor+=4
-    return data[12:cursor]
+    return data[cursor_start:cursor],cursor
 
-def get_question_domain(data):
-    cursor = 12
+def get_question_domain(data,cursor_start):
+    cursor = cursor_start
     while True:
         label_len = data[cursor]
         cursor+=1
 
         if(label_len>=192):
-            cursor+=2
+            cursor+=1
             break
 
         if(label_len==0):
@@ -34,14 +34,14 @@ def get_question_domain(data):
         else:
             cursor += label_len
 
-    return data[12:cursor]
+    return data[cursor_start:cursor], cursor
 
 def find_opcode(x):
     i=14
     p=0
     while(i>=11):
         if(x&((1<<i))):
-            p+= (1<<(i-11))
+            p+= (1<<i)
         i-=1
     
     return p
@@ -125,21 +125,35 @@ def main():
             ARCount =0
 
             #DNS QUESTION
-            question = get_question_section(data)
+            questions = b""
+            cursor=12
             incoming_qd_count = struct.unpack("!H" , data[4:6])[0]
             QDCount=incoming_qd_count
+            for _ in range(QDCount) :
+                question_domain,curr_cursor = get_question_section(data,cursor)
+                questions += question_domain
+                cursor = curr_cursor
 
             #DNS ANSWER
-            answer_name = get_question_domain(data) #same as the question domain
-            answer_type = 1
-            answer_class = 1
-            answer_TTL = 60
-            answer_RDLEN = 4
-            answer_RDATA = b"\x08\x08\x08\x08"
-            ANCount= QDCount
+            answers = b""
+            cursor = 12
+            ANCount= QDCount #because we answer all the questions (hell yeah)
 
-            answer_number_parts = struct.pack("!HHIH",answer_type,answer_class,answer_TTL,answer_RDLEN)
-            answer = answer_name + answer_number_parts + answer_RDATA
+            for _ in range(ANCount):
+                domain_name , curr_cursor = get_question_domain(data,cursor)
+                domain_type = 1
+                domain_class = 1
+                domain_TTL = 60
+                domain_RDLEN = 4
+                domain_RDATA = b"\x08\x08\x08\x08"
+
+                domain_numbers = struct.pack("!HHIH",domain_type,domain_class,domain_TTL,domain_RDLEN)
+
+                domain_answer = domain_name + domain_numbers + domain_RDATA
+
+                answers += domain_answer
+                cursor = curr_cursor
+            
 
             #UPDATED DNS HEADER ELEMENTS
             header_number_parts = struct.pack("!HHHHH",final_flag,QDCount,ANCount,NSCount,ARCount)
@@ -151,7 +165,7 @@ def main():
             # H -> expect an unsigned short int
 
             #DNS RESPONSE
-            response = header+question+answer
+            response = header+questions+answers
 
             udp_socket.sendto(response, address)
 
