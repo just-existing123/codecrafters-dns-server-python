@@ -22,7 +22,7 @@ def get_question_section(data,cursor_start):
         cursor+=1
 
         if(label_len>=192):
-            #cursor is at the offset byte right now
+            #cursor is at the offset byte right now 
             x=data[cursor]
             pointed_value = decompressor(data,x)
             decomp_question_type_and_class = struct.pack("!HH",1,1)
