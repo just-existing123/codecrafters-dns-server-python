@@ -156,8 +156,8 @@ def main():
                 #making the forwarding udp connection
                 forwarding_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-                proxy_flags = struct.pack("!HHHHH",0,1,0,0,0)
-                proxy_header = packet_id + proxy_flags
+                proxy_header_body = struct.pack("!HHHHH",0,1,0,0,0)
+                proxy_header = packet_id + proxy_header_body
                 proxy_question , new_cursor = get_question_section(data,cursor)
 
                 proxy_packet = proxy_header + proxy_question
@@ -180,7 +180,7 @@ def main():
 
                 # answers += domain_answer
                 answers += domain_response
-                cursor = curr_cursor
+                cursor = curr_cursor+4
             
 
             #UPDATED DNS HEADER ELEMENTS
