@@ -3,7 +3,6 @@ import struct
 
 def get_question_section(data):
     cursor = 12
-    domain_cnt=0
     while True:
         label_len = data[cursor]
         cursor+=1
@@ -22,13 +21,12 @@ def get_question_section(data):
 
 def get_question_domain(data):
     cursor = 12
-    domain_cnt=0
     while True:
         label_len = data[cursor]
         cursor+=1
 
         if(label_len>=192):
-            cursor+2
+            cursor+=2
             break
 
         if(label_len==0):
