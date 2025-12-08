@@ -41,7 +41,7 @@ def find_opcode(x):
     p=0
     while(i>=11):
         if(x&((1<<i))):
-            p+= (1<<i)
+            p+= (1<<(i-11))
         i-=1
     
     return p
